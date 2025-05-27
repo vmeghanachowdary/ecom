@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple E-commerce Site</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 50px;
+      padding: 50px;
+      background-image: url('cart.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #333;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    #login, #welcome {
+      padding: 10px;
+      text-align: center;
+    }
+    nav {
+      padding: 10px;
+      text-align: center;
+    }
+    input, select, button {
+      margin: 5px;
+      padding: 10px;
+    }
+    .product {
+      background: rgb(232, 220, 220);
+      margin: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(241, 140, 140, 0.1);
+    }
+    #products, #cart {
+      margin: 15px;
+      padding: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .product, .cart-item {
+      width: 250px;
+    }
+    .cart-item {
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .cart-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cart-controls button {
+      padding: 5px 10px;
+      margin: 0 5px;
+    }
+    .total {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My E-commerce Store</h1>
+  </header>
+
+  <div id="login">
+    <input type="text" id="username" placeholder="Enter username">
+    <button onclick="loginUser()">Login</button>
+  </div>
+  <div id="welcome" style="display:none;"></div>
+
+  <nav>
+    <input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
+    <select onchange="filterCategory(this.value)">
+      <option value="all">All</option>
+      <option value="electronics">Electronics</option>
+      <option value="clothing">Clothing</option>
+    </select>
+  </nav>
+
+  <section id="products">
+    <div class="product" data-category="electronics">
+      <h3>Phone</h3>
+      <p>$499</p>
+      <button onclick="addToCart('Phone', 499)">Add to Cart</button>
+    </div>
+    <div class="product" data-category="clothing">
+      <h3>T-Shirt</h3>
+      <p>$19</p>
+      <button onclick="addToCart('T-Shirt', 19)">Add to Cart</button>
+    </div>
+    <div class="product" data-category="electronics">
+      <h3>Headphones</h3>
+      <p>$99</p>
+      <button onclick="addToCart('Headphones', 99)">Add to Cart</button>
+    </div>
+  </section>
+
+  <section id="cart">
+    <h2>Cart</h2>
+    <div id="cartItems"></div>
+    <div class="total" id="cartTotal"></div>
+    <button onclick="checkout()" style="margin-top: 20px;">Checkout</button>
+  </section>
+
+  <script>
+    let cart = [];
+
+    function loginUser() {
+      const username = document.getElementById('username').value;
+      if (username) {
+        document.getElementById('welcome').innerHTML = `Welcome, ${username}!`;
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('welcome').style.display = 'block';
+      }
+    }
+
+    function addToCart(name, price) {
+      const existingItem = cart.find(item => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartItems = document.getElementById("cartItems");
+      cartItems.innerHTML = "";
+
+      let total = 0;
+      cart.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "cart-item";
+
+        const itemTotal = item.quantity * item.price;
+        total += itemTotal;
+
+        div.innerHTML = `
+          <div class="cart-controls">
+            <span>${item.name} - $${item.price} x ${item.quantity} = $${itemTotal.toFixed(2)}</span>
+          </div>
+          <div class="cart-controls">
+            <button onclick="changeQuantity('${item.name}', -1)">−</button>
+            <button onclick="changeQuantity('${item.name}', 1)">+</button>
+            <button onclick="removeItem('${item.name}')">Remove</button>
+          </div>
+        `;
+
+        cartItems.appendChild(div);
+      });
+
+      document.getElementById("cartTotal").textContent = `Total: $${total.toFixed(2)}`;
+    }
+
+    function changeQuantity(name, delta) {
+      const item = cart.find(i => i.name === name);
+      if (item) {
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+          cart = cart.filter(i => i.name !== name);
+        }
+        updateCart();
+      }
+    }
+
+    function removeItem(name) {
+      cart = cart.filter(i => i.name !== name);
+      updateCart();
+    }
+
+    function checkout() {
+      if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      const confirmPay = window.confirm("Do you want to proceed to payment?");
+      if (confirmPay) {
+        alert("Payment successful! Thank you for your purchase.");
+        cart = [];
+        updateCart();
+      }
+    }
+
+    function searchProducts() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const items = document.querySelectorAll('.product');
+      items.forEach(item => {
+        const name = item.querySelector('h3').textContent.toLowerCase();
+        item.style.display = name.includes(input) ? "block" : "none";
+      });
+    }
+
+    function filterCategory(category) {
+      const products = document.querySelectorAll('.product');
+      products.forEach(product => {
+        const type = product.getAttribute('data-category');
+        product.style.display = (category === "all" || type === category) ? "block" : "none";
+      });
+    }
+  </script>
+</body>
+</html>
